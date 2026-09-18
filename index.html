@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spelling Practice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <div class="max-w-2xl mx-auto w-full p-4 sm:p-6 lg:p-8 my-auto">
+        
+        <!-- HEADER -->
+        <header class="text-center mb-8">
+            <div class="inline-flex items-center justify-center p-3 bg-indigo-100 text-indigo-600 rounded-2xl mb-3 shadow-xs">
+                <i data-lucide="volume-2" class="w-8 h-8"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-slate-900 tracking-tight">Spelling Practice</h1>
+            <p class="text-slate-500 text-sm mt-1">Paste your target words, listen to pronunciation, and test your spelling accuracy.</p>
+        </header>
+
+        <div id="setup-section" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 transition-all duration-300">
+            <label for="word-input" class="block font-semibold text-slate-700 mb-2">
+                Enter Word List
+            </label>
+            <p class="text-xs text-slate-500 mb-3">
+                Paste your words below (separated by lines, commas, or spaces).
+            </p>
+            <textarea 
+                id="word-input" 
+                rows="5" 
+                class="w-full p-3.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-slate-800 placeholder-slate-400 text-base"
+                placeholder="example&#10;accommodate&#10;rhythm&#10;definitely"
+            ></textarea>
+            
+            <!-- Voice selection & settings options -->
+            <div class="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200/70 space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <label for="voice-select" class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                        <i data-lucide="mic" class="w-4 h-4 text-indigo-500"></i>
+                        Voice Selection:
+                    </label>
+                    <select id="voice-select" class="text-xs border border-slate-300 rounded-lg p-2 bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium max-w-full sm:max-w-xs text-slate-700">
+                        <option value="">Loading voices...</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <div>
+                        <label for="voice-speed" class="text-xs font-medium text-slate-600 block mb-1">Speed Rate:</label>
+                        <select id="voice-speed" class="w-full text-xs border border-slate-300 rounded-lg p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <option value="0.75">Slow (0.75x)</option>
+                            <option value="0.9" selected>Natural (0.9x)</option>
+                            <option value="1">Normal (1.0x)</option>
+                            <option value="1.2">Fast (1.2x)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="audio-engine" class="text-xs font-medium text-slate-600 block mb-1">Audio Source:</label>
+                        <select id="audio-engine" class="w-full text-xs border border-slate-300 rounded-lg p-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <option value="speech-synth" selected>Speech Voice API</option>
+                            <option value="online-audio">Online Audio (Dictionary)</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-end">
+                        <button 
+                            type="button" 
+                            onclick="testVoice()" 
+                            class="w-full py-1.5 px-3 bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium rounded-lg text-xs transition flex items-center justify-center gap-1.5"
+                        >
+                            <i data-lucide="volume-2" class="w-3.5 h-3.5"></i>
+                            Test Voice
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button 
+                id="start-btn" 
+                onclick="startPractice()" 
+                class="mt-6 w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-medium rounded-xl shadow-md shadow-indigo-100 hover:shadow-indigo-200 transition flex items-center justify-center gap-2"
+            >
+                <span>Start Practice</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div id="practice-section" class="hidden space-y-6">
+            <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
+                <span id="word-count-badge" class="text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                    0 Words
+                </span>
+                <button 
+                    onclick="resetApp()" 
+                    class="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1 transition"
+                >
+                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    New List
+                </button>
+            </div>
+
+            <div id="fields-container" class="space-y-4">
+                <!-- Dynamically generated fields will go here -->
+            </div>
+
+            <button 
+                id="check-btn" 
+                onclick="checkAnswers()" 
+                class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-medium rounded-xl shadow-md shadow-emerald-100 transition flex items-center justify-center gap-2"
+            >
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                <span>Check Answers</span>
+            </button>
+        </div>
+
+        <div id="results-card" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 text-center space-y-4">
+            <div id="score-icon" class="w-16 h-16 rounded-full mx-auto flex items-center justify-center">
+                <!-- Dynamic icon -->
+            </div>
+            <div>
+                <h2 id="score-title" class="text-2xl font-bold text-slate-900">Result Title</h2>
+                <p id="score-text" class="text-slate-600 text-sm mt-1">You scored 0 out of 0</p>
+            </div>
+            <div class="pt-2 flex flex-col sm:flex-row gap-3">
+                <button 
+                    onclick="retrySameWords()" 
+                    class="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-xl transition flex items-center justify-center gap-2 text-sm"
+                >
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Retry Same Words
+                </button>
+                <button 
+                    onclick="resetApp()" 
+                    class="flex-1 py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl transition flex items-center justify-center gap-2 text-sm"
+                >
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    Enter New Words
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="text-center py-4 text-slate-400 text-xs">
+        Powered by Web Speech API & Dictionary Audio Fallback
+    </footer>
+
+    <script>
+        let targetWords = [];
+        let availableVoices = [];
+        const synth = window.speechSynthesis;
+
+        // Initialize icons on DOM load
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            populateVoiceList();
+            if (synth && synth.onvoiceschanged !== undefined) {
+                synth.onvoiceschanged = populateVoiceList;
+            }
+        });
+
+        /**
+         * Load and rank system/browser voices, prioritizing natural & high quality ones
+         */
+        function populateVoiceList() {
+            if (!synth) return;
+            
+            const rawVoices = synth.getVoices();
+            if (!rawVoices || rawVoices.length === 0) return;
+
+            // Filter for English voices or all if none matched
+            let englishVoices = rawVoices.filter(v => v.lang.startsWith('en'));
+            if (englishVoices.length === 0) englishVoices = rawVoices;
+
+            // Helper keywords to identify higher-quality natural voices
+            const premiumKeywords = ['natural', 'online', 'google', 'siri', 'premium', 'neural', 'samantha', 'karen', 'daniel', 'alex', 'enhanced'];
+
+            // Sort voices: natural/premium English voices first
+            availableVoices = englishVoices.sort((a, b) => {
+                const nameA = a.name.toLowerCase();
+                const nameB = b.name.toLowerCase();
+
+                const scoreA = premiumKeywords.reduce((acc, kw) => nameA.includes(kw) ? acc + 2 : acc, 0) + (a.default ? 1 : 0);
+                const scoreB = premiumKeywords.reduce((acc, kw) => nameB.includes(kw) ? acc + 2 : acc, 0) + (b.default ? 1 : 0);
+
+                return scoreB - scoreA;
+            });
+
+            const voiceSelect = document.getElementById('voice-select');
+            if (!voiceSelect) return;
+
+            voiceSelect.innerHTML = '';
+
+            availableVoices.forEach((voice, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                const isNatural = premiumKeywords.some(kw => voice.name.toLowerCase().includes(kw));
+                option.textContent = `${voice.name} (${voice.lang})${isNatural ? ' ✨ High Quality' : ''}`;
+                voiceSelect.appendChild(option);
+            });
+        }
+
+        /**
+         * Test currently selected voice
+         */
+        function testVoice() {
+            speakWord('Spelling practice initialized successfully');
+        }
+
+        /**
+         * Pronounce a given word using Web Speech API or Fallback Audio
+         */
+        function speakWord(word) {
+            if (!word) return;
+
+            const audioEngine = document.getElementById('audio-engine')?.value || 'speech-synth';
+
+            if (audioEngine === 'online-audio') {
+                playOnlineAudio(word);
+            } else {
+                playSpeechSynth(word);
+            }
+        }
+
+        /**
+         * Native Web Speech API speech rendering
+         */
+        function playSpeechSynth(word) {
+            if (!synth) {
+                playOnlineAudio(word);
+                return;
+            }
+
+            // Stop ongoing speech
+            synth.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(word);
+            
+            // Apply selected voice
+            const voiceSelect = document.getElementById('voice-select');
+            if (voiceSelect && availableVoices.length > 0) {
+                const selectedIndex = parseInt(voiceSelect.value, 10);
+                if (!isNaN(selectedIndex) && availableVoices[selectedIndex]) {
+                    utterance.voice = availableVoices[selectedIndex];
+                }
+            }
+
+            // Fine-tune rate and pitch for more natural speech
+            const speedSelect = document.getElementById('voice-speed');
+            utterance.rate = parseFloat(speedSelect?.value) || 0.9;
+            utterance.pitch = 1.0; 
+
+            synth.speak(utterance);
+        }
+
+        /**
+         * Fallback audio from online pronunciation source
+         */
+        function playOnlineAudio(word) {
+            if (synth) synth.cancel();
+            
+            const cleanWord = word.trim().toLowerCase().replace(/[^a-z]/g, '');
+            if (!cleanWord) return;
+
+            // Dictionary API audio source for standard pronunciations
+            const audioUrl = `https://api.dictionaryapi.dev/media/pronunciations/en/${cleanWord}-us.mp3`;
+            const audio = new Audio(audioUrl);
+
+            audio.play().catch(() => {
+                // If dictionary audio fails, fallback back to speech synth
+                playSpeechSynth(word);
+            });
+        }
+
+        /**
+         * Parses words from input textarea
+         */
+        function parseWords(text) {
+            return text
+                .split(/[\n,]+/)
+                .map(w => w.trim())
+                .filter(w => w.length > 0);
+        }
+
+        /**
+         * Transition from setup view to practice view
+         */
+        function startPractice() {
+            const rawText = document.getElementById('word-input').value;
+            targetWords = parseWords(rawText);
+
+            if (targetWords.length === 0) {
+                alert('Please enter at least one word to practice.');
+                return;
+            }
+
+            // Hide setup, show practice
+            document.getElementById('setup-section').classList.add('hidden');
+            document.getElementById('practice-section').classList.remove('hidden');
+            document.getElementById('results-card').classList.add('hidden');
+
+            // Render form inputs
+            renderPracticeFields();
+        }
+
+        /**
+         * Render practice inputs dynamically
+         */
+        function renderPracticeFields() {
+            const container = document.getElementById('fields-container');
+            const countBadge = document.getElementById('word-count-badge');
+            
+            container.innerHTML = '';
+            countBadge.textContent = `${targetWords.length} ${targetWords.length === 1 ? 'Word' : 'Words'}`;
+
+            targetWords.forEach((word, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs space-y-2 transition";
+                card.id = `card-${index}`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-semibold text-slate-400 w-6 text-right">${index + 1}.</span>
+                        
+                        <div class="relative flex-1">
+                            <input 
+                                type="text" 
+                                id="input-${index}"
+                                autocomplete="off"
+                                autocorrect="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                placeholder="Listen and type spelling..."
+                                onfocus="speakWord('${escapeJsString(word)}')"
+                                class="w-full py-2.5 pl-3 pr-10 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-slate-800 text-base transition"
+                            />
+                        </div>
+
+                        <button 
+                            type="button" 
+                            tabindex="-1"
+                            onclick="speakWord('${escapeJsString(word)}')" 
+                            title="Listen Again"
+                            class="p-2.5 text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 transition flex items-center justify-center shrink-0 focus:outline-none"
+                        >
+                            <i data-lucide="volume-2" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    <div id="feedback-${index}" class="hidden text-xs pl-9 pt-1 font-medium"></div>
+                `;
+
+                container.appendChild(card);
+            });
+
+            // Re-initialize dynamic Lucide icons
+            lucide.createIcons();
+        }
+
+        /**
+         * Evaluate entered spellings against target list
+         */
+        function checkAnswers() {
+            let correctCount = 0;
+
+            targetWords.forEach((target, index) => {
+                const inputEl = document.getElementById(`input-${index}`);
+                const feedbackEl = document.getElementById(`feedback-${index}`);
+                const cardEl = document.getElementById(`card-${index}`);
+
+                const userVal = inputEl.value.trim();
+                const isCorrect = userVal.toLowerCase() === target.toLowerCase();
+
+                feedbackEl.classList.remove('hidden');
+
+                if (isCorrect) {
+                    correctCount++;
+                    cardEl.className = "bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 shadow-xs space-y-2 transition";
+                    inputEl.className = "w-full py-2.5 pl-3 pr-10 border border-emerald-400 bg-white rounded-lg text-emerald-900 font-medium text-base outline-none";
+                    feedbackEl.className = "text-xs pl-9 pt-1 font-semibold text-emerald-600 flex items-center gap-1";
+                    feedbackEl.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Correct!`;
+                } else {
+                    cardEl.className = "bg-rose-50/50 p-4 rounded-xl border border-rose-200 shadow-xs space-y-2 transition";
+                    inputEl.className = "w-full py-2.5 pl-3 pr-10 border border-rose-400 bg-white rounded-lg text-rose-900 font-medium text-base outline-none";
+                    feedbackEl.className = "text-xs pl-9 pt-1 font-semibold text-rose-600 flex items-center gap-1";
+                    feedbackEl.innerHTML = `<i data-lucide="x" class="w-4 h-4"></i> Incorrect. Correct spelling: <span class="underline font-bold">${escapeHtml(target)}</span>`;
+                }
+            });
+
+            lucide.createIcons();
+            showResultsSummary(correctCount, targetWords.length);
+        }
+
+        /**
+         * Render final score summary card
+         */
+        function showResultsSummary(score, total) {
+            const resultsCard = document.getElementById('results-card');
+            const scoreIcon = document.getElementById('score-icon');
+            const scoreTitle = document.getElementById('score-title');
+            const scoreText = document.getElementById('score-text');
+
+            const percentage = Math.round((score / total) * 100);
+
+            if (percentage === 100) {
+                scoreIcon.className = "w-16 h-16 rounded-full mx-auto flex items-center justify-center bg-emerald-100 text-emerald-600";
+                scoreIcon.innerHTML = `<i data-lucide="award" class="w-8 h-8"></i>`;
+                scoreTitle.textContent = "Perfect Score!";
+            } else if (percentage >= 70) {
+                scoreIcon.className = "w-16 h-16 rounded-full mx-auto flex items-center justify-center bg-indigo-100 text-indigo-600";
+                scoreIcon.innerHTML = `<i data-lucide="thumbs-up" class="w-8 h-8"></i>`;
+                scoreTitle.textContent = "Great Job!";
+            } else {
+                scoreIcon.className = "w-16 h-16 rounded-full mx-auto flex items-center justify-center bg-amber-100 text-amber-600";
+                scoreIcon.innerHTML = `<i data-lucide="book-open" class="w-8 h-8"></i>`;
+                scoreTitle.textContent = "Keep Practicing!";
+            }
+
+            scoreText.textContent = `You spelled ${score} out of ${total} words correctly (${percentage}%).`;
+            resultsCard.classList.remove('hidden');
+
+            lucide.createIcons();
+            resultsCard.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function retrySameWords() {
+            document.getElementById('results-card').classList.add('hidden');
+            renderPracticeFields();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetApp() {
+            document.getElementById('setup-section').classList.remove('hidden');
+            document.getElementById('practice-section').classList.add('hidden');
+            document.getElementById('results-card').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function escapeJsString(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        function escapeHtml(str) {
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
